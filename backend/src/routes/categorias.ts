@@ -14,6 +14,21 @@ const router = Router();
 
 /**
  * @swagger
+ * components:
+ *   schemas:
+ *     Categoria:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: number
+ *         nombre:
+ *           type: string
+ *       required:
+ *         - nombre
+ */
+
+/**
+ * @swagger
  * /categorias:
  *   get:
  *     summary: Obtiene todas las categorías
@@ -21,6 +36,12 @@ const router = Router();
  *     responses:
  *       200:
  *         description: Lista de categorías
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: "#/components/schemas/Categoria"
  */
 router.get("/", (req, res) => {
   res.json(categorias);
@@ -47,7 +68,9 @@ router.get("/", (req, res) => {
 router.get("/:id", (req, res) => {
   const id = Number(req.params.id);
   const cat = categorias.find(c => c.id === id);
+
   if (!cat) return res.status(404).json({ message: "Categoría no encontrada" });
+
   res.json(cat);
 });
 
@@ -62,12 +85,7 @@ router.get("/:id", (req, res) => {
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - nombre
- *             properties:
- *               nombre:
- *                 type: string
+ *             $ref: "#/components/schemas/Categoria"
  *     responses:
  *       201:
  *         description: Categoría creada
@@ -75,10 +93,15 @@ router.get("/:id", (req, res) => {
  *         description: Datos inválidos
  */
 router.post("/", (req, res) => {
-  const { nombre } = req.body as { nombre?: string };
-  if (!nombre) return res.status(400).json({ message: "nombre es requerido" });
+  const { nombre } = req.body;
+
+  if (!nombre) {
+    return res.status(400).json({ message: "El campo nombre es obligatorio" });
+  }
+
   const newCat: Categoria = { id: nextCategoriaId(), nombre };
   categorias.push(newCat);
+
   res.status(201).json(newCat);
 });
 
@@ -86,7 +109,7 @@ router.post("/", (req, res) => {
  * @swagger
  * /categorias/{id}:
  *   put:
- *     summary: Actualiza una categoría
+ *     summary: Actualiza una categoría existente
  *     tags: [Categorias]
  *     parameters:
  *       - in: path
@@ -99,10 +122,7 @@ router.post("/", (req, res) => {
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               nombre:
- *                 type: string
+ *             $ref: "#/components/schemas/Categoria"
  *     responses:
  *       200:
  *         description: Categoría actualizada
@@ -112,9 +132,13 @@ router.post("/", (req, res) => {
 router.put("/:id", (req, res) => {
   const id = Number(req.params.id);
   const cat = categorias.find(c => c.id === id);
+
   if (!cat) return res.status(404).json({ message: "Categoría no encontrada" });
+
   const { nombre } = req.body;
+
   if (nombre) cat.nombre = nombre;
+
   res.json(cat);
 });
 
@@ -122,7 +146,7 @@ router.put("/:id", (req, res) => {
  * @swagger
  * /categorias/{id}:
  *   delete:
- *     summary: Elimina una categoría
+ *     summary: Elimina una categoría por id
  *     tags: [Categorias]
  *     parameters:
  *       - in: path
@@ -139,8 +163,11 @@ router.put("/:id", (req, res) => {
 router.delete("/:id", (req, res) => {
   const id = Number(req.params.id);
   const idx = categorias.findIndex(c => c.id === id);
+
   if (idx === -1) return res.status(404).json({ message: "Categoría no encontrada" });
+
   const deleted = categorias.splice(idx, 1)[0];
+
   res.json(deleted);
 });
 

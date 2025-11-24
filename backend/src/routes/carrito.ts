@@ -9,14 +9,14 @@ const router = Router();
  * @swagger
  * tags:
  *   name: Carrito
- *   description: Gestión del carrito
+ *   description: Gestión del carrito de compras
  */
 
 /**
  * @swagger
  * /carrito:
  *   get:
- *     summary: Obtiene los items del carrito
+ *     summary: Lista los items del carrito
  *     tags: [Carrito]
  *     responses:
  *       200:
@@ -30,7 +30,7 @@ router.get("/", (req, res) => {
  * @swagger
  * /carrito:
  *   post:
- *     summary: Agrega un item al carrito
+ *     summary: Agrega un producto al carrito
  *     tags: [Carrito]
  *     requestBody:
  *       required: true
@@ -44,20 +44,34 @@ router.get("/", (req, res) => {
  *             properties:
  *               productoId:
  *                 type: integer
+ *                 description: ID del producto a agregar
  *               cantidad:
  *                 type: integer
+ *                 description: Cantidad del producto
  *     responses:
  *       201:
- *         description: Item agregado correctamente
+ *         description: Item agregado exitosamente
  *       400:
  *         description: Error en los datos enviados
  */
 router.post("/", (req, res) => {
-  const { productoId, cantidad } = req.body as { productoId?: number; cantidad?: number };
-  if (!productoId || !cantidad) return res.status(400).json({ message: "productoId y cantidad son requeridos" });
-  const prod = productos.find(p => p.id === productoId);
-  if (!prod) return res.status(400).json({ message: "productoId inválido" });
-  const newItem: CarritoItem = { id: nextCarritoItemId(), productoId, cantidad };
+  const { productoId, cantidad } = req.body;
+
+  if (!productoId || !cantidad)
+    return res
+      .status(400)
+      .json({ message: "productoId y cantidad son requeridos" });
+
+  const prod = productos.find((p) => p.id === productoId);
+  if (!prod)
+    return res.status(400).json({ message: "productoId inválido" });
+
+  const newItem: CarritoItem = {
+    id: nextCarritoItemId(),
+    productoId,
+    cantidad,
+  };
+
   carrito.push(newItem);
   res.status(201).json(newItem);
 });
@@ -66,7 +80,7 @@ router.post("/", (req, res) => {
  * @swagger
  * /carrito/{itemId}:
  *   delete:
- *     summary: Elimina un item del carrito
+ *     summary: Elimina un item del carrito por ID
  *     tags: [Carrito]
  *     parameters:
  *       - in: path
@@ -74,25 +88,29 @@ router.post("/", (req, res) => {
  *         required: true
  *         schema:
  *           type: integer
+ *         description: ID del item dentro del carrito
  *     responses:
  *       200:
- *         description: Item eliminado
+ *         description: Item eliminado correctamente
  *       404:
  *         description: Item no encontrado
  */
 router.delete("/:itemId", (req, res) => {
   const itemId = Number(req.params.itemId);
-  const idx = carrito.findIndex(i => i.id === itemId);
-  if (idx === -1) return res.status(404).json({ message: "Item no encontrado en carrito" });
-  const deleted = carrito.splice(idx, 1)[0];
-  res.json(deleted);
+  const index = carrito.findIndex((i) => i.id === itemId);
+
+  if (index === -1)
+    return res.status(404).json({ message: "Item no encontrado en carrito" });
+
+  const deletedItem = carrito.splice(index, 1)[0];
+  res.json(deletedItem);
 });
 
 /**
  * @swagger
  * /carrito:
  *   delete:
- *     summary: Vacía todo el carrito
+ *     summary: Vacía completamente el carrito
  *     tags: [Carrito]
  *     responses:
  *       200:

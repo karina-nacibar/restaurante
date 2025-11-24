@@ -9,7 +9,30 @@ const router = Router();
  * @swagger
  * tags:
  *   name: Productos
- *   description: Endpoints para productos
+ *   description: Endpoints para gestionar productos
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Producto:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: number
+ *         nombre:
+ *           type: string
+ *         descripcion:
+ *           type: string
+ *         precio:
+ *           type: number
+ *         categoriaId:
+ *           type: number
+ *       required:
+ *         - nombre
+ *         - precio
+ *         - categoriaId
  */
 
 /**
@@ -21,17 +44,27 @@ const router = Router();
  *     parameters:
  *       - in: query
  *         name: categoriaId
- *         required: false
  *         schema:
  *           type: integer
  *     responses:
  *       200:
  *         description: Lista de productos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: "#/components/schemas/Producto"
  */
 router.get("/", (req, res) => {
   const categoriaId = req.query.categoriaId ? Number(req.query.categoriaId) : undefined;
+
   let result = productos;
-  if (categoriaId) result = productos.filter(p => p.categoriaId === categoriaId);
+
+  if (categoriaId) {
+    result = productos.filter(p => p.categoriaId === categoriaId);
+  }
+
   res.json(result);
 });
 
@@ -56,7 +89,9 @@ router.get("/", (req, res) => {
 router.get("/:id", (req, res) => {
   const id = Number(req.params.id);
   const p = productos.find(x => x.id === id);
+
   if (!p) return res.status(404).json({ message: "Producto no encontrado" });
+
   res.json(p);
 });
 
@@ -64,27 +99,14 @@ router.get("/:id", (req, res) => {
  * @swagger
  * /productos:
  *   post:
- *     summary: Crea un producto
+ *     summary: Crea un nuevo producto
  *     tags: [Productos]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - nombre
- *               - precio
- *               - categoriaId
- *             properties:
- *               nombre:
- *                 type: string
- *               descripcion:
- *                 type: string
- *               precio:
- *                 type: number
- *               categoriaId:
- *                 type: integer
+ *             $ref: "#/components/schemas/Producto"
  *     responses:
  *       201:
  *         description: Producto creado
@@ -93,20 +115,24 @@ router.get("/:id", (req, res) => {
  */
 router.post("/", (req, res) => {
   const { nombre, descripcion, precio, categoriaId } = req.body as Partial<Producto>;
+
   if (!nombre || precio == null || !categoriaId) {
     return res.status(400).json({ message: "nombre, precio y categoriaId son requeridos" });
   }
+
   const catExists = categorias.find(c => c.id === categoriaId);
   if (!catExists) return res.status(400).json({ message: "categoriaId inválido" });
 
   const newProd: Producto = {
     id: nextProductoId(),
     nombre,
-    descripcion,
+    descripcion: descripcion || "",
     precio,
     categoriaId,
   };
+
   productos.push(newProd);
+
   res.status(201).json(newProd);
 });
 
@@ -127,16 +153,7 @@ router.post("/", (req, res) => {
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               nombre:
- *                 type: string
- *               descripcion:
- *                 type: string
- *               precio:
- *                 type: number
- *               categoriaId:
- *                 type: integer
+ *             $ref: "#/components/schemas/Producto"
  *     responses:
  *       200:
  *         description: Producto actualizado
@@ -146,9 +163,11 @@ router.post("/", (req, res) => {
 router.put("/:id", (req, res) => {
   const id = Number(req.params.id);
   const p = productos.find(x => x.id === id);
+
   if (!p) return res.status(404).json({ message: "Producto no encontrado" });
 
   const { nombre, descripcion, precio, categoriaId } = req.body as Partial<Producto>;
+
   if (nombre !== undefined) p.nombre = nombre;
   if (descripcion !== undefined) p.descripcion = descripcion;
   if (precio !== undefined) p.precio = precio;
@@ -178,8 +197,11 @@ router.put("/:id", (req, res) => {
 router.delete("/:id", (req, res) => {
   const id = Number(req.params.id);
   const idx = productos.findIndex(p => p.id === id);
+
   if (idx === -1) return res.status(404).json({ message: "Producto no encontrado" });
+
   const deleted = productos.splice(idx, 1)[0];
+
   res.json(deleted);
 });
 

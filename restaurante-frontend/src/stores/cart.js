@@ -17,13 +17,6 @@ export const useCartStore = defineStore("cart", {
 
       if (existe) {
         existe.cantidad++;
-
-        // 👉 Actualizar cantidad en backend
-        await axios.post("http://localhost:3000/carrito", {
-          productoId: producto.id,
-          cantidad: 1
-        });
-
       } else {
         this.items.push({
           id: producto.id,
@@ -31,15 +24,20 @@ export const useCartStore = defineStore("cart", {
           precio: producto.precio,
           cantidad: 1
         });
+      }
 
-        // 👉 Agregar nuevo item al backend
+      try {
+        // Agregar al carrito del backend
         await axios.post("http://localhost:3000/carrito", {
           productoId: producto.id,
           cantidad: 1
         });
+      } catch (error) {
+        console.error("Error al agregar al carrito:", error);
       }
     },
 
+    // Método corregido: clearCart en lugar de clear
     clearCart() {
       this.items = [];
     }
